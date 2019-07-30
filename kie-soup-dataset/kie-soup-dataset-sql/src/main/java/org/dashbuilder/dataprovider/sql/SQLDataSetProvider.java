@@ -257,8 +257,14 @@ public class SQLDataSetProvider implements DataSetProvider, DataSetDefRegistryLi
         SQLDataSetDef sqlDef = (SQLDataSetDef) def;
         DataSource ds = dataSourceLocator.lookup(sqlDef);
         Connection conn = ds.getConnection();
+        conn.setAutoCommit(false);
         try {
-            return _getDataSetMetadata(sqlDef, conn, true);
+            DataSetMetadata metadata = _getDataSetMetadata(sqlDef, conn, true);
+            conn.commit();
+            return metadata;
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
         } finally {
             conn.close();
         }
